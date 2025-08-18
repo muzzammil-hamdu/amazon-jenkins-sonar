@@ -1,42 +1,46 @@
 pipeline {
     agent any
     environment {
-        // Use PATH+EXTRA to append to PATH properly
-        PATH = "/usr/bin:/bin:/opt/homebrew/bin"
+        SONAR_NAME = 'LocalSonarQube'
+        VAULT_PASS_ID = 'vault-password-id'
     }
     stages {
-
-        stage('pull') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/PraveenKuber/Amazon-Jenkins.git'
+                git url: 'https://github.com/muzzammil-hamdu/amazon-jenkins-sonar.git', branch: 'main'
             }
         }
-        stage('compile') {
+        stage('Build') {
             steps {
-                sh 'mvn compile'
+                script {
+                    sh 'mvn clean package'
+                }
             }
         }
-
-        stage('build') {
+        stage('SonarQube Analysis') {
             steps {
-                 sh 'mvn clean install'
+                withSonarQubeEnv("$SONAR_NAME") {
+                    sh 'mvn sonar:sonar'
+                }
             }
         }
-
-        
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage('Deploy to Tomcat') {
+            steps {
+                withCredentials([string(credentialsId: "$VAULT_PASS_ID", variable: 'VAULT_PASSWORD')]) {
+                    sh '''
+                        echo $VAULT_PASSWORD > ansible/vault/.vault_pass.txt
+                        ansible-playbook -i ansible/inventories/production ansible/playbooks/deploy-tomcat.yml --vault-password-file ansible/vault/.vault_pass.txt
+                    '''
+                }
+            }
+        }
     }
-
-  post{
-
-  success{
-     echo 'Build success'
-  }
-    
-  failure{
-       echo 'Failure in the build'
-   }
-
-  }
-
-
 }
+
