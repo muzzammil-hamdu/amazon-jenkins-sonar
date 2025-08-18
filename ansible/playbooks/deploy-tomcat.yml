@@ -6,7 +6,7 @@
   tasks:
     - name: Copy WAR file to Tomcat server
       copy:
-        src: /home/mujju/Amazon.war             
+        src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/             
         dest: /home/hamdu/tomcat/webapps/Amazon.war
 
     - name: Restart Tomcat service
