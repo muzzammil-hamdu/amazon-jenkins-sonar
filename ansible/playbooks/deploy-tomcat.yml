@@ -1,12 +1,12 @@
 ---
-- hosts: test_servers
+- hosts: test_servers     # updated to match inventory group
   become: yes
   vars_files:
     - ../vault/credentials.yml
   tasks:
     - name: Copy WAR file to Tomcat server
       copy:
-        src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war
+        src: "{{ lookup('env','WORKSPACE') }}/target/Amazon.war"
         dest: /opt/tomcat9/webapps/Amazon.war
         mode: '0644'
 
