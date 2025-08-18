@@ -3,19 +3,23 @@ pipeline {
     environment {
         SONAR_NAME = 'LocalSonarQube'
         VAULT_PASS_ID = 'vault-password-id'
-        SSH_KEY_ID   = 'vm1-key'   // ID of the SSH key credential you created
+        SSH_KEY_ID   = 'vm1-key'
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
     }
+
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/muzzammil-hamdu/amazon-jenkins-sonar.git', branch: 'main'
+                git branch: 'main', url: 'https://github.com/muzzammil-hamdu/amazon-jenkins-sonar.git'
             }
         }
+
         stage('Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONAR_NAME}") {
@@ -23,13 +27,15 @@ pipeline {
                 }
             }
         }
+
         stage('Quality Gate') {
             steps {
-                timeout(time: 15, unit: 'MINUTES') {
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
+
         stage('Deploy to Tomcat') {
             steps {
                 withCredentials([
@@ -37,16 +43,12 @@ pipeline {
                     sshUserPrivateKey(credentialsId: "${SSH_KEY_ID}", keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
                 ]) {
                     sh '''
-                        # Save vault password
-                        echo $VAULT_PASSWORD > ansible/vault/.vault_pass.txt
-
-                        # Run ansible with the private key
-                        ansible-playbook \
-                          -i ansible/inventories/production \
+                        echo $VAULT_PASSWORD > /tmp/.vault_pass.txt
+                        ansible-playbook -i ansible/inventories/production \
                           ansible/playbooks/deploy-tomcat.yml \
-                          --vault-password-file ansible/vault/.vault_pass.txt \
-                          --key-file $SSH_KEY_FILE \
-                          -u $SSH_USER
+                          --vault-password-file /tmp/.vault_pass.txt \
+                          --key-file $SSH_KEY_FILE -u $SSH_USER
+                        rm -f /tmp/.vault_pass.txt
                     '''
                 }
             }
