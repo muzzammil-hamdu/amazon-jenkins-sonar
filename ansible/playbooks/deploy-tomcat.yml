@@ -1,17 +1,21 @@
 ---
-- hosts: test_servers     # updated to match inventory group
+- name: Deploy Amazon.war to Tomcat
+  hosts: test_servers
   become: yes
   vars_files:
     - ../vault/credentials.yml
+
   tasks:
     - name: Copy WAR file to Tomcat server
       copy:
-        src: "{{ lookup('env','WORKSPACE') }}/target/Amazon.war"
-        dest: /opt/tomcat9/webapps/Amazon.war
+        src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war
+        dest: /home/hamdu/tomcat/webapps/Amazon.war
+        owner: hamdu
+        group: hamdu
         mode: '0644'
 
     - name: Restart Tomcat service
       systemd:
-        name: tomcat9
+        name: tomcat
         state: restarted
 
