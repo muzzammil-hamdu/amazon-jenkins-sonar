@@ -6,11 +6,12 @@
   tasks:
     - name: Copy WAR file to Tomcat server
       copy:
-        src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/             
-        dest: /home/hamdu/tomcat/webapps/Amazon.war
+        src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war
+        dest: /opt/tomcat9/webapps/Amazon.war
+        mode: '0644'
 
     - name: Restart Tomcat service
       systemd:
-        name: tomcat
+        name: tomcat9
         state: restarted
 
