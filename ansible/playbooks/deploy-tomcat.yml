@@ -1,21 +1,61 @@
 ---
-- name: Deploy Amazon WAR to Tomcat
-  hosts: all
+- hosts: test_servers
   become: yes
-  vars_files:
-    - ../vault/credentials.yml   # Encrypted secrets
+
+  vars:
+    tomcat_version: 9.0.82
+    tomcat_install_dir: /home/hamdu/tomcat
+    tomcat_user: hamdu
+    war_src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war
+    war_dest: "{{ tomcat_install_dir }}/webapps/Amazon.war"
 
   tasks:
+    - name: Ensure Java is installed
+      apt:
+        name: openjdk-11-jdk
+        state: present
+
+    - name: Create Tomcat install directory
+      file:
+        path: "{{ tomcat_install_dir }}"
+        state: directory
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        mode: '0755'
+
+    - name: Download Tomcat
+      get_url:
+        url: "https://dlcdn.apache.org/tomcat/tomcat-9/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+
+    - name: Extract Tomcat
+      unarchive:
+        src: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: "{{ tomcat_install_dir }}"
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Make Tomcat startup scripts executable
+      file:
+        path: "{{ tomcat_install_dir }}/bin/{{ item }}"
+        mode: '0755'
+      loop:
+        - startup.sh
+        - catalina.sh
+        - shutdown.sh
+
     - name: Copy WAR file to Tomcat webapps
       copy:
-        src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war 
-        dest: /home/hamdu/tomcat/webapps/Amazon.war
-        owner: hamdu 
-        group: hamdu 
+        src: "{{ war_src }}"
+        dest: "{{ war_dest }}"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
         mode: '0644'
 
-    - name: Restart Tomcat service
-      systemd:
-        name: tomcat
-        state: restarted
+    - name: Start Tomcat
+      shell: "{{ tomcat_install_dir }}/bin/startup.sh"
+      args:
+        chdir: "{{ tomcat_install_dir }}/bin"
+      become: yes
+      become_user: "{{ tomcat_user }}"
 
