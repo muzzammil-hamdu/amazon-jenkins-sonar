@@ -1,0 +1,16 @@
+---
+- hosts: tomcat_servers
+  become: yes
+  vars_files:
+    - ../vault/credentials.yml
+  tasks:
+    - name: Copy WAR file to Tomcat server
+      copy:
+        src: /home/mujju/Amazon.war             
+        dest: /home/hamdu/tomcat/webapps/Amazon.war
+
+    - name: Restart Tomcat service
+      systemd:
+        name: tomcat
+        state: restarted
+
