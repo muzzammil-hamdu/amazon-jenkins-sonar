@@ -8,10 +8,10 @@
   tasks:
     - name: Copy WAR file to Tomcat webapps
       copy:
-        src: "{{ playbook_dir }}/../../target/Amazon.war"
-        dest: /opt/tomcat/webapps/Amazon.war
-        owner: tomcat
-        group: tomcat
+        src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war 
+        dest: /home/hamdu/tomcat/webapps/Amazon.war
+        owner: hamdu 
+        group: hamdu 
         mode: '0644'
 
     - name: Restart Tomcat service
