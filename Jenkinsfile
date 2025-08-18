@@ -15,13 +15,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                script {
-                    // Build and rename WAR for consistent deployment
-                    sh '''
-                        mvn clean package
-                        cp target/*.war target/Amazon.war
-                    '''
-                }
+                sh 'mvn clean package'
             }
         }
 
@@ -45,15 +39,10 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: "${VAULT_PASS_ID}", variable: 'VAULT_PASSWORD')]) {
                     sh '''
-                        # Save vault password temporarily
                         echo $VAULT_PASSWORD > .vault_pass.txt
-                        
-                        # Run Ansible deployment
                         ansible-playbook -i ansible/inventories/production \
                                          ansible/playbooks/deploy-tomcat.yml \
                                          --vault-password-file .vault_pass.txt
-                        
-                        # Cleanup vault file
                         rm -f .vault_pass.txt
                     '''
                 }
@@ -69,7 +58,7 @@ pipeline {
             echo "❌ Pipeline Failed. Check logs."
         }
         always {
-            cleanWs() // Clean Jenkins workspace after each run
+            cleanWs()
         }
     }
 }
