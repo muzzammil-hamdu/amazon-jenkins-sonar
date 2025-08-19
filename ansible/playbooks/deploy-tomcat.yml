@@ -1,11 +1,12 @@
 ---
 - hosts: test_servers
   become: yes
+  vars_files:
+    - ../vault/credentials.yml
 
   vars:
     tomcat_version: 9.0.82
     tomcat_install_dir: /home/hamdu/tomcat
-    tomcat_user: hamdu
     war_src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war
     war_dest: "{{ tomcat_install_dir }}/webapps/Amazon.war"
 
@@ -19,8 +20,8 @@
       file:
         path: "{{ tomcat_install_dir }}"
         state: directory
-        owner: "{{ tomcat_user }}"
-        group: "{{ tomcat_user }}"
+        owner: hamdu
+        group: hamdu
         mode: '0755'
 
     - name: Download Tomcat
@@ -35,6 +36,14 @@
         remote_src: yes
         extra_opts: [--strip-components=1]
 
+    - name: Deploy tomcat-users.xml from template
+      template:
+        src: tomcat-users.xml.j2
+        dest: "{{ tomcat_install_dir }}/conf/tomcat-users.xml"
+        owner: hamdu
+        group: hamdu
+        mode: '0644'
+
     - name: Make Tomcat startup scripts executable
       file:
         path: "{{ tomcat_install_dir }}/bin/{{ item }}"
@@ -48,14 +57,27 @@
       copy:
         src: "{{ war_src }}"
         dest: "{{ war_dest }}"
-        owner: "{{ tomcat_user }}"
-        group: "{{ tomcat_user }}"
+        owner: hamdu
+        group: hamdu
         mode: '0644'
+
+    - name: Deploy WAR via Tomcat Manager API
+      uri:
+        url: "http://localhost:8080/manager/text/deploy?path=/Amazon&update=true"
+        method: PUT
+        user: "{{ tomcat_admin_user }}"
+        password: "{{ tomcat_admin_password }}"
+        force_basic_auth: yes
+        status_code: [200, 201, 204]
+        body: "{{ lookup('file', war_dest) }}"
+        headers:
+          Content-Type: application/octet-stream
+      delegate_to: localhost
 
     - name: Start Tomcat
       shell: "{{ tomcat_install_dir }}/bin/startup.sh"
       args:
         chdir: "{{ tomcat_install_dir }}/bin"
       become: yes
-      become_user: "{{ tomcat_user }}"
+      become_user: hamdu
 
