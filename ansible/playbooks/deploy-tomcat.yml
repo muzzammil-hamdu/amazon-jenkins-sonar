@@ -68,7 +68,7 @@
   
     - name: Start Tomcat
       command: "{{ tomcat_install_dir }}/bin/startup.sh"
-       become: yes
-       become_user: hamdu
+      become: yes
+      become_user: hamdu
 
 
