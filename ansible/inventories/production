@@ -1,3 +1,2 @@
 [test_servers]
-server2 ansible_host=20.57.130.181 ansible_user=hamdu
-
+server2 ansible_ssh_host=20.57.130.181 ansible_user=hamdu ansible_private_key_file=/home/mujju/vm1_key.pem
