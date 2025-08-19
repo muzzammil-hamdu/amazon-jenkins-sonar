@@ -21,26 +21,30 @@ pipeline {
             }
         }
 
-        stage('Deploy WAR to Tomcat') {
-            steps {
-                withCredentials([
-                    sshUserPrivateKey(credentialsId: 'vm1-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER'),
-                    string(credentialsId: 'vault-password-id', variable: 'VAULT_PASSWORD')
-                ]) {
-                    sh '''
-                        echo $VAULT_PASSWORD > ansible/vault/.vault_pass.txt
+stage('Deploy WAR to Tomcat') {
+    steps {
+        withCredentials([
+            sshUserPrivateKey(credentialsId: 'vm1-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER'),
+            string(credentialsId: 'vault-password-id', variable: 'VAULT_PASSWORD')
+        ]) {
+            sh '''
+                # Fix permissions for SSH key
+                chmod 600 $SSH_KEY_FILE
 
-                        # Disable strict host key checking
-                        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-                          -i ansible/inventories/production \
-                          ansible/playbooks/deploy-tomcat.yml \
-                          --private-key $SSH_KEY_FILE \
-                          -u $SSH_USER \
-                          --vault-password-file ansible/vault/.vault_pass.txt
-                    '''
-                }
-            }
+                # Write vault password
+                echo $VAULT_PASSWORD > ansible/vault/.vault_pass.txt
+
+                # Run Ansible playbook
+                ansible-playbook \
+                  -i ansible/inventories/production \
+                  ansible/playbooks/deploy-tomcat.yml \
+                  --private-key $SSH_KEY_FILE \
+                  -u $SSH_USER \
+                  --vault-password-file ansible/vault/.vault_pass.txt
+            '''
+           }
         }
+      }
     }
-}
+ }
 
