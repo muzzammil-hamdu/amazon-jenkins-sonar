@@ -60,19 +60,7 @@
         owner: hamdu
         group: hamdu
         mode: '0644'
-
-    - name: Deploy WAR via Tomcat Manager API
-      uri:
-        url: "http://localhost:8080/manager/text/deploy?path=/Amazon&update=true"
-        method: PUT
-        user: "{{ tomcat_admin_user }}"
-        password: "{{ tomcat_admin_password }}"
-        force_basic_auth: yes
-        status_code: [200, 201, 204]
-        body: "{{ lookup('file', war_dest) }}"
-        headers:
-          Content-Type: application/octet-stream
-
+  
     - name: Start Tomcat
       shell: "{{ tomcat_install_dir }}/bin/startup.sh"
       args:
