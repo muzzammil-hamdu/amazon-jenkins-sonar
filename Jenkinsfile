@@ -6,11 +6,13 @@ pipeline {
                 git url: 'https://github.com/muzzammil-hamdu/amazon-jenkins-sonar.git', branch: 'main'
             }
         }
+
         stage('Build') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('LocalSonarQube') {
@@ -18,7 +20,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Deploy WAR to Tomcat') {
             steps {
                 withCredentials([
@@ -27,7 +29,9 @@ pipeline {
                 ]) {
                     sh '''
                         echo $VAULT_PASSWORD > ansible/vault/.vault_pass.txt
-                        ansible-playbook \
+
+                        # Disable strict host key checking
+                        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
                           -i ansible/inventories/production \
                           ansible/playbooks/deploy-tomcat.yml \
                           --private-key $SSH_KEY_FILE \
