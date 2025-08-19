@@ -60,6 +60,11 @@
         owner: hamdu
         group: hamdu
         mode: '0644'
+
+    - name: Ensure Tomcat startup script is executable
+      file:
+      path: /home/hamdu/tomcat/bin/startup.sh
+      mode: '0755'    
   
     - name: Start Tomcat
       command: "{{ tomcat_install_dir }}/bin/startup.sh"
