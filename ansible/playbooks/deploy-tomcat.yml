@@ -5,7 +5,7 @@
     - ../vault/credentials.yml
 
   vars:
-    tomcat_version: 9.0.97
+    tomcat_version: 9.0.108
     tomcat_install_dir: /home/hamdu/tomcat
     war_src: /var/lib/jenkins/workspace/Amazon-Jenkins_sonar-CI/target/Amazon.war
     war_dest: "{{ tomcat_install_dir }}/webapps/Amazon.war"
