@@ -62,9 +62,8 @@
         mode: '0644'
   
     - name: Start Tomcat
-      shell: "{{ tomcat_install_dir }}/bin/startup.sh"
-      args:
-        chdir: "{{ tomcat_install_dir }}/bin"
+      command: "{{ tomcat_install_dir }}/bin/startup.sh"
       become: yes
       become_user: hamdu
+
 
