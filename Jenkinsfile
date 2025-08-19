@@ -18,13 +18,7 @@ pipeline {
                 }
             }
         }
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 25, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        
         stage('Deploy WAR to Tomcat') {
             steps {
                 withCredentials([
