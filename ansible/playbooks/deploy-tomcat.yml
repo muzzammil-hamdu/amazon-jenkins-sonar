@@ -15,6 +15,7 @@
       apt:
         name: openjdk-11-jdk
         state: present
+        update_cache: yes
 
     - name: Create Tomcat install directory
       file:
@@ -36,6 +37,13 @@
         remote_src: yes
         extra_opts: [--strip-components=1]
 
+    - name: Fix ownership recursively for Tomcat
+      file:
+        path: "{{ tomcat_install_dir }}"
+        owner: hamdu
+        group: hamdu
+        recurse: yes
+
     - name: Deploy tomcat-users.xml from template
       template:
         src: tomcat-users.xml.j2
@@ -44,10 +52,12 @@
         group: hamdu
         mode: '0644'
 
-    - name: Make Tomcat startup scripts executable
+    - name: Ensure Tomcat bin scripts are executable
       file:
         path: "{{ tomcat_install_dir }}/bin/{{ item }}"
         mode: '0755'
+        owner: hamdu
+        group: hamdu
       loop:
         - startup.sh
         - catalina.sh
@@ -61,14 +71,14 @@
         group: hamdu
         mode: '0644'
 
-    - name: Ensure Tomcat startup script is executable
-      file:
-        path: /home/hamdu/tomcat/bin/startup.sh
-        mode: '0755'    
-  
+    - name: Debug Tomcat bin directory permissions
+      command: ls -l {{ tomcat_install_dir }}/bin
+      register: bin_perms
+
+    - debug:
+        var: bin_perms.stdout_lines
+
     - name: Start Tomcat
       command: "{{ tomcat_install_dir }}/bin/startup.sh"
       become: yes
       become_user: hamdu
-
-
