@@ -25,17 +25,20 @@ pipeline {
                 }
             }
         }
-        stage('Deploy WAR using Ansible') {
+        stage('Deploy WAR to Tomcat') {
             steps {
                 withCredentials([
-                    sshUserPrivateKey(credentialsId: 'vm1-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')
+                    sshUserPrivateKey(credentialsId: 'vm1-key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER'),
+                    string(credentialsId: 'vault-password-id', variable: 'VAULT_PASSWORD')
                 ]) {
                     sh '''
+                        echo $VAULT_PASSWORD > ansible/vault/.vault_pass.txt
                         ansible-playbook \
                           -i ansible/inventories/production \
                           ansible/playbooks/deploy-tomcat.yml \
                           --private-key $SSH_KEY_FILE \
-                          -u $SSH_USER
+                          -u $SSH_USER \
+                          --vault-password-file ansible/vault/.vault_pass.txt
                     '''
                 }
             }
