@@ -63,12 +63,12 @@
 
     - name: Ensure Tomcat startup script is executable
       file:
-      path: /home/hamdu/tomcat/bin/startup.sh
-      mode: '0755'    
+        path: /home/hamdu/tomcat/bin/startup.sh
+        mode: '0755'    
   
     - name: Start Tomcat
       command: "{{ tomcat_install_dir }}/bin/startup.sh"
-      become: yes
-      become_user: hamdu
+       become: yes
+       become_user: hamdu
 
 
